@@ -5,7 +5,17 @@ if (Meteor.isClient) {
 
   Template.body.helpers({
     tasks: function () {
-      return Tasks.find({}, {sort: {createdAt : -1}});
+      if (Session.get("hideCompleted")) {
+        return Tasks.find({checked: {$ne: true}}, {sort: {createdAt: -1}});
+      } else {
+        return Tasks.find({}, {sort: {createdAt: -1}});
+      }
+    },
+    hideCompleted: function () {
+      return Session.get("hideCompleted");
+    },
+    incompletedCount: function () {
+      return Tasks.find({checked: {$ne: true}}).count();
     }
 
   });
@@ -26,7 +36,10 @@ if (Meteor.isClient) {
       // Prevent default form submit
       return false;
 
-    } 
+    },
+    "change .hide-completed input": function(event) {
+      Session.set("hideCompleted", event.target.checked);
+    }
   });
 
   Template.task.events({
@@ -37,6 +50,10 @@ if (Meteor.isClient) {
     "click .delete": function() {
       Tasks.remove(this._id);
     }
+  });
+
+  Accounts.ui.config({
+    passwordSignupFields: "USERNAME_ONLY"
   });
 
 }
